@@ -1,0 +1,240 @@
+ <!DOCTYPE html>
+<html>
+    <body>
+        <canvas id="canvas" width="400" height="400" style="background-color: #333"></canvas>
+        <script>
+            /*////////////////////////////////////////////////////////////\
+TANK GAME - Made By Anthony & Lots of Help From Spencer
+
+b[0][bNum] = bullet x rotation offset
+b[1][bNum] = bullet y rotation offset
+b[2][bNum] = bullet x position
+b[3][bNum] = bullet y position
+b[4][bNum] = bullet rotation in terms of radians
+*/////////////////////////////////////////////////////////////
+
+var dr = 0;
+var bNum = 0;
+var xRes;
+var yRes;
+var timer;
+var bombSize;
+var Tank = [];
+
+var x = 400;
+var y = 200;
+var bombx;
+var bomby;
+var speed = 3;
+
+var[][] b = new var[5][20];
+
+var isLeft = false;
+var isRight = false;
+var isForward = false;
+var isBack = false;
+var mouseFlag = false;
+var isbomb = false;
+
+var[] shot = new var[20];
+var[] bounce = new var[20];
+
+void setup(){
+  fullScreen();
+  //size(displayWidth, displayHeight);
+  xRes = displayWidth;
+  yRes = displayHeight;
+  
+}
+
+void draw(){
+   fill(0,0,255,70);
+   rectMode(CORNER);
+   rect(0,0,xRes,yRes);
+   //for the boundrys for tank
+   if (x > xRes){
+     x = xRes;
+   }
+  if(x<0){
+    x = 0;
+  }
+  if(y>yRes){
+    y = yRes;
+  }
+  if(y<0){
+    y = 0;
+  }
+  // for the bounce of bullets
+  for(int i = 0; i < 20; i++){
+    if(bounce[i]){
+      if(b[2][i] < 0 || b[2][i] > xRes){
+        b[0][i] *= -1;
+        bounce[i] = false;
+      }
+      if(b[3][i] < 0 || b[3][i] > yRes){
+        b[1][i] *= -1;
+        bounce[i] = false;
+      }
+    }
+  }
+    
+  
+   
+   if(isbomb){
+    fill(#FF0533);
+    ellipse(bombx,bomby,bombSize,bombSize);
+   }
+   
+  // tank
+  pushMatrix();
+    translate(x,y);
+    rotate(radians(dr));
+    rectMode(CENTER);
+    //hull
+    fill(#51A008);
+    rect(0,0,40,80,10);
+    fill(100,100,100);
+    rect(10,36,10,5,10);
+    rect(-10,36,10,5,10);
+    
+    // treads
+    fill(0,0,0);
+    rect(25,0,10,85,5);
+    rect(-25,0,10,85,5);
+    fill(#5F5F5F);
+    //details on treads
+    for(int i = 40; i>=-40; i-= 5){
+      rect(-25,i,10,2);
+      rect(25,i,10,2);
+    }
+  popMatrix();
+  
+  pushMatrix();
+    //turret
+    translate(x,y);
+    // just in case, this is so the turret follows the mouse
+    if(mouseX < x){
+      rotate(atan((mouseY - y) / (mouseX - x)) + PI  / 2);
+    }
+    else{
+      rotate(atan((mouseY - y) / (mouseX - x)) + (3 * PI / 2));
+    }
+    fill(#00FF3D);
+    rect(0,40,8,65,100);
+    ellipse(0,0,30,30);
+    fill(255,255,255);
+    rect(0,65,10,17,2);
+  popMatrix();
+      
+  for(int i = 0; i < 20; i++){
+    if(shot[i]){
+      pushMatrix();
+        translate(b[2][i], b[3][i]);
+        rotate(b[4][i]);
+        fill(#FF8400);
+        rect(0,0,8,15,20);
+        b[2][i] += b[0][i] * 7;
+        b[3][i] += b[1][i] * 7;
+      popMatrix();
+    }
+    timer -= 1;
+  }
+  
+  //bullet
+  if(mousePressed){
+    if(!mouseFlag){
+      if(mouseX < x){
+        b[0][bNum % 20] = -cos(atan((mouseY - y) / (mouseX - x)));
+        b[1][bNum % 20] = -sin(atan((mouseY - y) / (mouseX - x)));
+        b[4][bNum % 20] = atan((mouseY - y) / (mouseX - x)) + PI / 2;
+      }
+      else{
+        b[0][bNum % 20] = cos(atan((mouseY - y) / (mouseX - x)));
+        b[1][bNum % 20] = sin(atan((mouseY - y) / (mouseX - x)));
+        b[4][bNum % 20] = atan((mouseY - y) / (mouseX - x)) + 3 * PI / 2;
+      }
+
+      b[2][bNum % 20] = x + 65f * b[0][bNum % 20];
+      b[3][bNum % 20] = y + 65f * b[1][bNum % 20];
+      
+      shot[bNum % 20] = true;
+      bounce[bNum % 20] = true;
+      bNum++;
+      mouseFlag = true;
+    }
+  }
+  
+  if(!mousePressed){
+    if(mouseFlag){
+      mouseFlag = false;
+    }
+  }
+  
+  if (keyPressed){
+    if(key == 'a' && !isLeft){
+      isLeft = true;
+    }
+    if(key == 'd' && !isRight){
+      isRight = true;
+    }
+    if(key == 'w' && !isForward){
+      isForward = true;
+    }
+    if(key == 's' && !isBack){
+      isBack = true;
+    }
+    if(key == ' ' && !isbomb){
+      bombx = x;
+      bomby = y;
+      isbomb = true;
+      bombSize = 20;
+      timer = millis();
+    }
+  }
+ 
+  if(isLeft){
+    dr -= speed;
+  }
+  if(isRight){
+    dr += speed;
+  }
+  if(isForward){
+    x += cos(radians(dr + 90)) * speed;
+    y += sin(radians(dr + 90)) * speed;
+  }
+  if(isBack){
+    x -= cos(radians(dr + 90)) * speed;
+    y -= sin(radians(dr + 90)) * speed;
+  }
+  
+  if(isbomb){
+    if(timer + 3500 < millis()){
+      isbomb = false;
+    }
+    else if(timer + 3000 < millis()){
+      bombSize += 5;
+    }
+  }
+}
+
+void keyReleased(){
+  if(key == 'a' && isLeft == true){
+    isLeft = false;
+  }
+  if(key == 'd' && isRight == true){
+    isRight = false;
+  }
+  if(key == 'w' && isForward == true){
+    isForward = false;
+  }
+  if(key == 's' && isBack == true){
+    isBack = false;
+  }
+    if(key == ' ' && isbomb == true){
+    //isbomb = false;
+  }
+}
+                </script>
+	
+	</body>
+</html>
